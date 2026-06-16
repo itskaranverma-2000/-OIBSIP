@@ -1,0 +1,118 @@
+{
+ "nbformat": 4,
+ "nbformat_minor": 5,
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.10.0"
+  }
+ },
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["# Task 1 — Dataset 2: McDonald's Menu Nutrition Analysis\n**Name:** Karan Verma\n**Internship:** Oasis Infobyte (OIBSIP)\n**Domain:** Data Analytics\n\n---\nThis notebook performs Exploratory Data Analysis (EDA) on McDonald's Menu Nutrition dataset to uncover patterns in calories, fat, protein, and other nutrients across menu categories."]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 1 — Import Libraries"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport numpy as np\n\nplt.style.use('seaborn-v0_8-whitegrid')\nprint('Libraries loaded successfully!')"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 2 — Load and Inspect Dataset"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["df = pd.read_csv('menu.csv')\nprint('Shape:', df.shape)\nprint('\\nColumns:', df.columns.tolist())\ndf.head()"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 3 — Data Cleaning"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["print('Missing Values:')\nprint(df.isnull().sum())\nprint('\\nDuplicates:', df.duplicated().sum())\nprint('\\nBasic Statistics:')\ndf[['Calories','Total Fat','Sodium','Carbohydrates','Sugars','Protein']].describe().round(2)"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 4 — Chart 1: Average Calories by Category"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["cat_cal = df.groupby('Category')['Calories'].mean().sort_values(ascending=False)\nfig, ax = plt.subplots(figsize=(12, 6))\ncolors = ['#E63946' if c == cat_cal.index[0] else '#4C72B0' for c in cat_cal.index]\nbars = ax.bar(cat_cal.index, cat_cal.values, color=colors, edgecolor='white')\nax.set_title('Average Calories by Menu Category', fontsize=14, fontweight='bold', pad=15)\nax.set_xlabel('Category', fontsize=11)\nax.set_ylabel('Average Calories', fontsize=11)\nplt.xticks(rotation=30, ha='right')\nfor bar, val in zip(bars, cat_cal.values):\n    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 5,\n            f'{val:.0f}', ha='center', va='bottom', fontsize=9)\nplt.tight_layout()\nplt.savefig('mcd_calories_by_category.png', dpi=150, bbox_inches='tight')\nplt.show()\nprint('Insight: Chicken & Fish items have highest average calories (553), Beverages have lowest (114)')"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 5 — Chart 2: Top 10 Highest Calorie Items"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["top10 = df.nlargest(10, 'Calories')[['Item', 'Calories']]\nfig, ax = plt.subplots(figsize=(12, 6))\nbar_colors = ['#E63946' if i < 3 else '#4C72B0' for i in range(10)]\nax.barh(top10['Item'], top10['Calories'], color=bar_colors, edgecolor='white')\nax.set_title('Top 10 Highest Calorie Items at McDonald\\'s', fontsize=14, fontweight='bold', pad=15)\nax.set_xlabel('Calories', fontsize=11)\nax.invert_yaxis()\nfor i, val in enumerate(top10['Calories']):\n    ax.text(val + 10, i, f'{val}', va='center', fontsize=9)\nplt.tight_layout()\nplt.savefig('mcd_top10_calories.png', dpi=150, bbox_inches='tight')\nplt.show()\nprint('Insight: Chicken McNuggets 40 piece is highest at 1880 calories!')"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 6 — Chart 3: Correlation Heatmap"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["cols = ['Calories', 'Total Fat', 'Sodium', 'Carbohydrates', 'Sugars', 'Protein']\nfig, ax = plt.subplots(figsize=(8, 6))\nsns.heatmap(df[cols].corr(), annot=True, fmt='.2f', cmap='RdYlGn', ax=ax,\n            linewidths=0.5, vmin=-1, vmax=1)\nax.set_title('Correlation Between Nutrition Values', fontsize=14, fontweight='bold', pad=15)\nplt.tight_layout()\nplt.savefig('mcd_correlation_heatmap.png', dpi=150, bbox_inches='tight')\nplt.show()\nprint('Insight: Total Fat has 0.90 correlation with Calories — strongest relationship!')"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 7 — Chart 4: Protein vs Calories"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["fig, ax = plt.subplots(figsize=(10, 6))\ncategories = df['Category'].unique()\ncolors_map = plt.cm.Set1(np.linspace(0, 1, len(categories)))\nfor cat, col in zip(categories, colors_map):\n    subset = df[df['Category'] == cat]\n    ax.scatter(subset['Protein'], subset['Calories'], label=cat, color=col, alpha=0.7, s=60)\nax.set_title('Protein vs Calories (by Category)', fontsize=14, fontweight='bold', pad=15)\nax.set_xlabel('Protein (g)', fontsize=11)\nax.set_ylabel('Calories', fontsize=11)\nax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)\nplt.tight_layout()\nplt.savefig('mcd_protein_vs_calories.png', dpi=150, bbox_inches='tight')\nplt.show()\nprint('Insight: Higher protein items tend to have more calories, especially Chicken & Fish category')"]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": ["## Step 8 — Key Insights Summary"]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": ["print('=== KEY INSIGHTS ===')\nprint(f'Total menu items analyzed: {len(df)}')\nprint(f'Total categories: {df[\"Category\"].nunique()}')\nprint(f'\\nHighest calorie item: {df.loc[df[\"Calories\"].idxmax(), \"Item\"]} ({df[\"Calories\"].max()} cal)')\nprint(f'Lowest calorie item: {df.loc[df[\"Calories\"].idxmin(), \"Item\"]} ({df[\"Calories\"].min()} cal)')\nprint(f'Average calories overall: {df[\"Calories\"].mean():.0f}')\nprint(f'\\nFat vs Calories correlation: {df[\"Total Fat\"].corr(df[\"Calories\"]):.2f}')\nprint(f'Protein vs Calories correlation: {df[\"Protein\"].corr(df[\"Calories\"]):.2f}')"]
+  }
+ ]
+}
